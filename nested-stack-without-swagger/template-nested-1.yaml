@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for test-nested
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 512
+
+Parameters:
+  RestApiId:
+    Type: String
+  RestApiRootResourceId:
+    Type: String
+
+Resources:
+
+
+  TodoPostFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TodoPostFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*
+
+  TodoPostFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: ./src/HelloWorld/
+      Handler: HelloWorld::HelloWorld.Function::FunctionHandler
+      Runtime: dotnet8
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+
+
+  ApiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      Policies:
+        - PolicyName: InvokeFunctionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt TodoPostFunction.Arn
+
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref RestApiRootResourceId
+      PathPart: v1
+      RestApiId: !Ref RestApiId
+
+  ApiGatewayResourceTodos:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref ApiGatewayResource
+      PathPart: todos
+      RestApiId: !Ref RestApiId
+
+
+
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Credentials: !GetAtt ApiGatewayRole.Arn
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TodoPostFunction.Arn}/invocations
+        IntegrationResponses:
+          - ResponseTemplates:
+              application/json: ""
+            StatusCode: 200
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        # RequestParameters:
+        #   integration.request.header.Authorization: method.request.header.authorization
+      ResourceId: !Ref ApiGatewayResourceTodos
+      RestApiId: !Ref RestApiId
+
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiGatewayMethod
+      - ApiGatewayResource
+      - ApiGatewayResourceTodos
+    Properties:
+      RestApiId: !Ref RestApiId
+      StageName: default
+
+
+
+
+
+
+# Outputs:
+#   TodoPostFunctionArn:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt TodoPostFunction.Arn

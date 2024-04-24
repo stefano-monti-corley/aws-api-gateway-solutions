@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Sample SAM Template for test-nested
+
+  '
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 512
+Parameters:
+  Var1:
+    Type: String
+    Default: test
+Resources:
+  ServerlessRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ../../swagger.yaml
+  ServerlessStack1:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ServerlessStack1/template.yaml
+    Metadata:
+      SamResourceId: ServerlessStack1
+  ServerlessStack2:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ServerlessStack2/template.yaml
+    Metadata:
+      SamResourceId: ServerlessStack2

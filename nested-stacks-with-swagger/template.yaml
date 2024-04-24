@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for test-nested
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 512
+
+Parameters:
+  Var1:
+    Type: String
+    Default: "test"
+
+
+Resources:
+
+  ServerlessRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./swagger.yaml
+      # DefinitionBody: 
+      #   openapi: 3.0.0
+      #   info:
+      #     version: '1.0'
+      #     title: My Api
+      #   paths:
+      #     '/v1/todos': # API path
+      #       post: # API Method
+      #         x-amazon-apigateway-integration:
+      #           # This is always POST - it is the
+      #           # AWS API call that is referenced
+      #           httpMethod: POST
+      #           type: AWS_PROXY
+      #           uri: !Sub >-
+      #             arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessStack1.Outputs.TodoPostFunctionArn}/invocations
+      #         responses: {}
+      #     '/v2/todos': # API path
+      #       get: # API Method
+      #         x-amazon-apigateway-integration:
+      #           # This is always POST - it is the
+      #           # AWS API call that is referenced
+      #           httpMethod: POST
+      #           type: AWS_PROXY
+      #           uri: !Sub >-
+      #             arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessStack2.Outputs.TodoPostFunctionArn}/invocations
+      #         responses: {}
+
+  ServerlessStack1:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-1.yaml
+      
+
+  # ServerlessStack3:
+  #   Type: AWS::Serverless::Application
+  #   Properties:
+  #     Location: ./template-nested-3.yaml
+  #     Parameters:
+  #       Var1: !Ref Var1
+      
+  ServerlessStack2:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-2.yaml
+
+  
+
+

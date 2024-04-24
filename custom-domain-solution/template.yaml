@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for test-nested
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 512
+
+Parameters:
+  CertificateArn:
+    Type: String
+  DomainName:
+    Type: String
+  HostedZoneId:
+    Type: String
+
+
+Resources:
+
+  ApiGatewayDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      CertificateArn: !Ref CertificateArn
+      DomainName: !Ref DomainName
+      EndpointConfiguration: 
+        Types:
+          - EDGE
+  
+  myDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      ResourceRecords:
+        - !GetAtt ApiGatewayDomainName.DistributionDomainName
+      TTL: 900
+      Type: CNAME
+
+  ServerlessStack1:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./nested1/template.yaml
+      Parameters:
+        DomainName: !Ref DomainName
+
+
+  ServerlessStack2:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./nested2/template.yaml
+      Parameters:
+        DomainName: !Ref DomainName
+
+      
+
+
+  
+
+
