@@ -21,49 +21,6 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: My API
-      # DefinitionBody:
-      #   Fn::Transform:
-      #     Name: AWS::Include
-      #     Parameters:
-      #       Location: ./swagger.yaml
-      # DefinitionBody: 
-      #   openapi: 3.0.0
-      #   info:
-      #     version: '1.0'
-      #     title: My Api
-      #   paths:
-      #     '/v1/todos': # API path
-      #       post: # API Method
-      #         x-amazon-apigateway-integration:
-      #           # This is always POST - it is the
-      #           # AWS API call that is referenced
-      #           httpMethod: POST
-      #           type: AWS_PROXY
-      #           uri: !Sub >-
-      #             arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessStack1.Outputs.TodoPostFunctionArn}/invocations
-      #         responses: {}
-      #     '/v2/todos': # API path
-      #       get: # API Method
-      #         x-amazon-apigateway-integration:
-      #           # This is always POST - it is the
-      #           # AWS API call that is referenced
-      #           httpMethod: POST
-      #           type: AWS_PROXY
-      #           uri: !Sub >-
-      #             arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessStack2.Outputs.TodoPostFunctionArn}/invocations
-      #         responses: {}
-
-  # ApiStage:
-  #   Type: AWS::ApiGateway::Stage
-  #   Properties:
-  #     StageName: default
-  #     RestApiId: !Ref ServerlessRestApi
-  #     DeploymentId: !Ref Deployment
-
-  # Deployment:
-  #   Type: AWS::ApiGateway::Deployment
-  #   Properties:
-  #     RestApiId: !Ref ServerlessRestApi
 
   
   ServerlessStack1:
@@ -73,20 +30,14 @@ Resources:
       Parameters:
         RestApiId: !Ref ServerlessRestApi 
         RestApiRootResourceId: !GetAtt ServerlessRestApi.RootResourceId
-      
-
-  # ServerlessStack3:
-  #   Type: AWS::Serverless::Application
-  #   Properties:
-  #     Location: ./template-nested-3.yaml
-  #     Parameters:
-  #       Var1: !Ref Var1
-      
-  # ServerlessStack2:
-  #   Type: AWS::Serverless::Application
-  #   Properties:
-  #     Location: ./template-nested-2.yaml
 
   
-
-
+  ServerlessStack2:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-2.yaml
+      Parameters:
+        RestApiId: !Ref ServerlessRestApi 
+        RestApiRootResourceId: !GetAtt ServerlessRestApi.RootResourceId
+         
+      
