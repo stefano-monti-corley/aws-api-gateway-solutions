@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for test-nested
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 512
+
+Parameters:
+  HostedZoneId:
+    Type: String
+    Default: ""
+  DomainName:
+    Type: String
+  Environment:
+    Type: String
+  CertificateArn:
+    Type: String
+
+
+Conditions:
+  HostedZoneIdIsNotEmpty: !Not [!Equals [!Ref HostedZoneId, ""]]
+
+
+
+Resources:
+
+
+  ApiGatewayDomainName:
+    Type: AWS::ApiGateway::DomainName
+    DependsOn: 
+      - ServerlessRestApi1
+      - ServerlessRestApi2
+    Properties:
+      CertificateArn: !Ref CertificateArn
+      DomainName: !Ref DomainName
+      EndpointConfiguration: 
+        Types:
+          - EDGE
+
+
+  # non necessario in caso domain registry di terze parti
+  MyDNSRecord:
+    Condition: HostedZoneIdIsNotEmpty
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      ResourceRecords:
+        - !GetAtt ApiGatewayDomainName.DistributionDomainName
+      TTL: 900
+      Type: CNAME
+
+
+##################
+#  API Gateway 1 #
+##################
+
+  ServerlessRestApi1:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      EndpointConfiguration:
+        Type: REGIONAL
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./swagger1.yaml
+
+  
+  BasePath1:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: 
+     - ServerlessRestApi1Stage
+     - ApiGatewayDomainName
+    Properties:
+      BasePath: path1
+      DomainName: !Ref DomainName
+      RestApiId: !Ref ServerlessRestApi1
+      Stage: !Ref ServerlessRestApi1Stage
+
+
+  ServerlessStack1:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-1.yaml
+      
+  ServerlessStack2:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-2.yaml
+
+
+##################
+#  API Gateway 2 #
+##################
+
+  ServerlessRestApi2:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      EndpointConfiguration:
+        Type: REGIONAL
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./swagger2.yaml
+
+  BasePath2:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+     - ServerlessRestApi2Stage
+     - ApiGatewayDomainName
+    Properties:
+      BasePath: path2
+      DomainName: !Ref DomainName
+      RestApiId: !Ref ServerlessRestApi2
+      Stage: !Ref ServerlessRestApi2Stage
+
+
+  ServerlessStack3:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-3.yaml
+      
+  ServerlessStack4:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./template-nested-4.yaml
+
+
+
+  
+
+

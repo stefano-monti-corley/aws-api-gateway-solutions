@@ -1,0 +1,25 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: My Api
+paths:
+  '/v1/todos3': # API path
+    post: # API Method
+      x-amazon-apigateway-integration:
+        # This is always POST - it is the
+        # AWS API call that is referenced
+        httpMethod: POST
+        type: AWS_PROXY
+        uri: 
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessStack3.Outputs.TodoPostFunctionArn}/invocations
+      responses: {}
+  '/v2/todos4': # API path
+    get: # API Method
+      x-amazon-apigateway-integration:
+        # This is always POST - it is the
+        # AWS API call that is referenced
+        httpMethod: POST
+        type: AWS_PROXY
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessStack4.Outputs.TodoPostFunctionArn}/invocations
+      responses: {}
